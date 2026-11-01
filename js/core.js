@@ -22,7 +22,7 @@ let _mt; const _mo = new MutationObserver((ms) => {
   clearTimeout(_mt); _mt = setTimeout(() => { _mo.disconnect(); typeset(); _mo.observe($('#app'), { childList: true, subtree: true }); }, 60);
 });
 document.addEventListener('DOMContentLoaded', () => _mo.observe($('#app'), { childList: true, subtree: true }));
-window.addEventListener('load', typeset);
+window.addEventListener('load', () => { if (!window.renderMathInElement) toast('Math library (KaTeX) could not load. Check your internet / ad-blocker.'); typeset(); });
 
 function toast(m) { if (m === '__stale') return; const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = 'none', 4000); }
 
