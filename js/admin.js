@@ -45,9 +45,9 @@ function drawSetForm() {
     <button class="btn ok sm" data-a="mSaveSet">Save set details</button> <span class="mu">Marks changes apply to future attempts; old results keep their saved marks.</span></div>`;
 }
 function drawQs() {
-  $('#mList').innerHTML = AD.qs.map((q, i) => `<div class="q" id="mq${i}"><div class="qh"><span><span class="qid">${esc(q.id)}</span>${esc(q.q)}</span>
+  $('#mList').innerHTML = AD.qs.map((q, i) => `<div class="q" id="mq${i}"><div class="qh"><span><span class="qid">${esc(q.id)}</span>${fq(q.q)}</span>
     <span style="white-space:nowrap"><button class="btn s sm" data-a="copyq" data-id="${esc(q.id)}">🔗 Link</button> <button class="btn s sm" data-a="mEdit" data-i="${i}">Edit</button> <button class="btn del sm" data-a="mDel" data-i="${i}">Delete</button></span></div>
-    <div class="os two">${q.options.map((o, k) => `<div class="o ${k === q.ans ? 'y' : ''}"><i class="b">${L[k]}</i><span>${esc(clean(o))}</span></div>`).join('')}</div></div>`).join('') || '<p class="mu">No questions in this chapter.</p>';
+    <div class="os two">${q.options.map((o, k) => `<div class="o ${k === q.ans ? 'y' : ''}"><i class="b">${L[k]}</i><span>${fopt(o)}</span></div>`).join('')}</div></div>`).join('') || '<p class="mu">No questions in this chapter.</p>';
 }
 Object.assign(act, {
   save: async () => {
