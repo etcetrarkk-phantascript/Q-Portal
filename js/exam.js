@@ -5,7 +5,7 @@ VIEWS.exam = () => {
   $('#app').innerHTML = `<div class="stick"><span style="font-size:13px">${esc(E.set.chapter)} · ${esc(E.set.name)}</span><b id="tm"></b><button class="btn sm" style="background:#fff;color:var(--p)" data-a="submit">Submit</button></div>
   <div class="card"><div class="mu" style="margin-bottom:8px">Answered: <b id="cnt">0</b> / ${q.length} (yellow = answered)</div>
   <div class="pal">${q.map((_, i) => `<a id="p${i}" data-a="jump" data-i="${i}">${i + 1}</a>`).join('')}</div></div>
-  ${q.map((x, i) => `<div class="q" id="q${i}"><div class="qh"><span>${esc(x.q)}</span><span class="sc">+${E.set.pos}</span></div>
+  ${q.map((x, i) => `<div class="q" id="q${i}"><div class="qh"><span><span class="qid">${esc(x.id)}</span><a data-a="copyq" data-id="${esc(x.id)}" title="Copy question link" style="cursor:pointer;margin-right:6px">🔗</a>${esc(x.q)}</span><span class="sc">+${E.set.pos}</span></div>
   <div class="os">${x.options.map((o, k) => `<button class="o" data-a="pick" data-i="${i}" data-k="${k}"><i class="b">${L[k]}</i><span>${esc(clean(o))}</span></button>`).join('')}</div></div>`).join('')}
   <div class="card row"><span class="mu">Unanswered questions carry no penalty. Auto-submits at 00:00.</span>
   <span><button class="btn s" data-a="exit">Exit</button> <button class="btn" data-a="submit">Submit exam</button></span></div>`;
