@@ -4,7 +4,7 @@ VIEWS.auth = (m) => {
   if (typeof m === 'string') AU.m = m;
   const em = esc(AU.em);
   const F = {
-    login: `<h2>Sign in</h2><p class="mu">${S.pendQ ? 'Sign in to open the shared question ' + esc(S.pendQ) : 'Use your registered Gmail account.'}</p>
+    login: `<h2>Sign in</h2><p class="mu">${S.pendId ? 'Sign in to open the shared ' + (S.pendV === 'set' ? 'exam ' : 'question ') + esc(S.pendId) : 'Use your registered Gmail account.'}</p>
       <label>Gmail</label><input id="e" type="email" value="${em}"><label>Password</label><input id="p" type="password">
       <button class="btn" data-a="login" style="width:100%">Sign in</button>
       <p class="lk mu"><a data-a="auth" data-m="reg">Create account</a> &nbsp;·&nbsp; <a data-a="auth" data-m="forgot">Forgot password?</a></p>`,
@@ -31,7 +31,7 @@ Object.assign(act, {
   auth: d => VIEWS.auth(d.m),
   login: async () => {
     const j = await api('login', { email: val('e'), pass: val('p') });
-    S.t = j.token; S.u = j.user; localStorage.setItem('qp_t', j.token); localStorage.setItem('qp_u', JSON.stringify(j.user)); go(S.pendQ ? 'q' : 'home', S.pendQ);
+    S.t = j.token; S.u = j.user; localStorage.setItem('qp_t', j.token); localStorage.setItem('qp_u', JSON.stringify(j.user)); go(S.pendV || 'home', S.pendId);
   },
   register: async () => {
     AU.em = val('e').trim().toLowerCase();
