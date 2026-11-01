@@ -5,7 +5,7 @@ VIEWS.home = async () => {
   $('#app').innerHTML = `<div class="hero"><div style="opacity:.8;font-size:13px">স্বাগতম · Welcome back</div><h1>Hello, ${esc(S.u.name.split(' ')[0])} 👋</h1>
     <p>Practice, measure, improve.</p><div class="strip" id="strip"></div></div>
     <div class="tiles">${T.map(t => `<a class="card pick" data-a="go" data-v="${t[0]}"><div class="tile">${t[1]}</div><h3>${t[2]}</h3><div class="mu">${t[3]}</div></a>`).join('')}</div>`;
-  const r = (await api('history')).rows.filter(x => x.mine);
+  const r = ((await api('history')).rows || []).filter(x => x.mine);
   $('#strip').innerHTML = [[r.length, 'Tests taken'], [r.length ? avg(r.map(x => x.pct)).toFixed(1) + '%' : '–', 'Average score'],
     [r.length ? Math.max(...r.map(x => x.pct)) + '%' : '–', 'Best score'], [r.length ? fmtT(avg(r.map(x => x.secs))) : '–', 'Avg time']]
     .map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('');
@@ -38,7 +38,7 @@ function drawExams() {
       return `<div class="card"><h3>${esc(p)}</h3>${uniq(inP.map(s => s.chapter)).map(c => `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>
         ${inP.filter(s => s.chapter === c).map(s => `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} questions · ${s.mins} min · +${s.pos} / −${s.neg}</span><br>
           <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span> ${s.best != null ? `<span class="pill g">Best ${s.best}%</span>` : ''}</div>
-          ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</div>`).join('')}</div>`).join('')}</div>`; }).join('');
+          <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}" title="Copy link to this exam">🔗 Share</button> ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</span></div>`).join('')}</div>`).join('')}</div>`; }).join('');
   }
   $('#app').innerHTML = crumb + body;
 }
