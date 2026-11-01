@@ -5,8 +5,8 @@ VIEWS.exam = () => {
   $('#app').innerHTML = `<div class="stick"><span style="font-size:13px">${esc(E.set.chapter)} · ${esc(E.set.name)}</span><b id="tm"></b><button class="btn sm" style="background:#fff;color:var(--p)" data-a="submit">Submit</button></div>
   <div class="card"><div class="mu" style="margin-bottom:8px">Answered: <b id="cnt">0</b> / ${q.length} (yellow = answered)</div>
   <div class="pal">${q.map((_, i) => `<a id="p${i}" data-a="jump" data-i="${i}">${i + 1}</a>`).join('')}</div></div>
-  ${q.map((x, i) => `<div class="q" id="q${i}"><div class="qh"><span><span class="qid">${esc(x.id)}</span><a data-a="copyq" data-id="${esc(x.id)}" title="Copy question link" style="cursor:pointer;margin-right:6px">🔗</a>${esc(x.q)}</span><span class="sc">+${E.set.pos}</span></div>
-  <div class="os">${x.options.map((o, k) => `<button class="o" data-a="pick" data-i="${i}" data-k="${k}"><i class="b">${L[k]}</i><span>${esc(clean(o))}</span></button>`).join('')}</div></div>`).join('')}
+  ${q.map((x, i) => `<div class="q" id="q${i}"><div class="qh"><span><span class="qid">${esc(x.id)}</span>${fq(x.q)}</span><span class="sc">+${E.set.pos}</span></div>
+  <div class="os">${x.options.map((o, k) => `<button class="o" data-a="pick" data-i="${i}" data-k="${k}"><i class="b">${L[k]}</i><span>${fopt(o)}</span></button>`).join('')}</div></div>`).join('')}
   <div class="card row"><span class="mu">Unanswered questions carry no penalty. Auto-submits at 00:00.</span>
   <span><button class="btn s" data-a="exit">Exit</button> <button class="btn" data-a="submit">Submit exam</button></span></div>`;
   clearInterval(timer);
@@ -38,9 +38,9 @@ VIEWS.report = async ({ id, type = 1 }) => {
     ${k ? '<span><span class="pill" style="background:var(--y);color:#713f12">গ</span> Correct option</span>' : ''}</div><hr style="border:0;border-top:1px solid var(--bd);margin:14px 0">
     ${j.items.map(it => {
       const st = it.pick == null ? '' : it.right ? 'ok' : 'bad';
-      return `<div class="q ${st}"><div class="qh"><span><span class="qid">${esc(it.id)}</span><a class="noprint" data-a="copyq" data-id="${esc(it.id)}" title="Copy question link" style="cursor:pointer;margin-right:6px">🔗</a>${esc(it.q)}</span><span class="sc ${st}">${it.right ? '+' + m.pos : it.pick == null ? '0' : '−' + m.neg}</span></div><div class="os two">
+      return `<div class="q ${st}"><div class="qh"><span><span class="qid">${esc(it.id)}</span>${fq(it.q)}</span><span class="sc ${st}">${it.right ? '+' + m.pos : it.pick == null ? '0' : '−' + m.neg}</span></div><div class="os two">
       ${it.options.map((o, x) => { const c = it.pick === x ? (it.right ? 'g' : 'r') : (k && it.ans === x ? 'y' : '');
-        return `<div class="o ${c}"><i class="b">${L[x]}</i><span>${esc(clean(o))}</span></div>`; }).join('')}</div></div>`;
+        return `<div class="o ${c}"><i class="b">${L[x]}</i><span>${fopt(o)}</span></div>`; }).join('')}</div></div>`;
     }).join('')}</div>`;
 };
 
