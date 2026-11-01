@@ -11,6 +11,7 @@ const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 let S = { t: localStorage.getItem('qp_t'), u: JSON.parse(localStorage.getItem('qp_u') || 'null'), sets: [] };
 let V = 'auth';
 const VIEWS = {}, act = {};
+let NAVID = 0;   // bumps on every page change; late responses of an old page are ignored (fixes random 'Cannot read properties' errors)
 
 function typeset() {   // KaTeX: renders $...$ in the page (safe to call any time)
   if (!window.renderMathInElement) return;
@@ -23,12 +24,14 @@ let _mt; const _mo = new MutationObserver((ms) => {
 document.addEventListener('DOMContentLoaded', () => _mo.observe($('#app'), { childList: true, subtree: true }));
 window.addEventListener('load', typeset);
 
-function toast(m) { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = 'none', 4000); }
+function toast(m) { if (m === '__stale') return; const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = 'none', 4000); }
 
 async function api(a, b = {}) {
   if (!CONFIG.API_URL) throw 'Set API_URL in js/config.js first.';
+  const nv = NAVID;
   const r = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ a, t: S.t, ...b }) });
   const j = await r.json();
+  if (nv !== NAVID) throw '__stale';
   if (j.auth) logout();
   if (!j.ok) throw j.error;
   return j;
@@ -44,11 +47,14 @@ function nav() {
 }
 
 function go(v, arg) {
-  V = v; window.scrollTo(0, 0); nav();
+  V = v; NAVID++; window.scrollTo(0, 0); nav();
   Promise.resolve(VIEWS[v](arg)).catch(e => toast(typeof e === 'string' ? e : (e.message || 'Something went wrong')));
 }
 
-act.go = d => go(d.v);
+act.go = d => {
+  if (typeof E !== 'undefined' && E) { if (!confirm('An exam is in progress. Leave and lose your answers?')) return; clearInterval(timer); E = null; }
+  go(d.v);
+};
 act.logout = () => logout();
 
 document.addEventListener('click', async (e) => {
