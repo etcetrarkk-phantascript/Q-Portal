@@ -8,6 +8,7 @@
    css/style.css     all styling
    js/config.js      ← this file: your settings
    js/core.js        helpers · API call · router · navigation
+   js/math.js        plain/unicode math → KaTeX formulas automatically
    js/auth.js        register / sign in / reset
    js/home.js        Home dashboard + Exams (class → subject → chapter)
    js/exam.js        timed exam + Result / Solution sheets (print to PDF)
