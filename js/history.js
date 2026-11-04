@@ -1,9 +1,10 @@
 /* HISTORY: students see their own; admin picks a student from a dropdown to see that student's full history */
-let HS = '', HC = [];
+let HS = '', HC = [], WH = [];
 VIEWS.hist = async (a) => {
   if (a && a.email) HS = a.email;
   $('#app').innerHTML = '<p class="mu">Loading…</p>';
   HC = (await api('history')).rows || [];
+  WH = S.u.role === 'admin' ? [] : ((await api('wMine').catch(e => { if (e === '__stale') throw e; return { rows: [] }; })).rows || []);
   drawHist();
 };
 function drawHist() {
@@ -25,5 +26,6 @@ function drawHist() {
   <td>${r.solution === 'approved' ? `<button class="btn ok sm" data-a="rep" data-id="${r.id}" data-t="2">Solution</button>`
     : r.solution === 'requested' ? '<span class="pill w">Pending</span>' : `<button class="btn s sm" data-a="reqsol" data-id="${r.id}" data-h="1">Request</button>`}</td></tr>`).join('')
     || `<tr><td colspan="8" class="mu">No attempts yet.</td></tr>`}</table></div></div>`;
+  if (typeof drawWHist === 'function') drawWHist();
 }
 document.addEventListener('change', e => { if (e.target.dataset.sel === 'hs') { HS = e.target.value; drawHist(); } });
