@@ -23,8 +23,9 @@ VIEWS.admin = async () => {
     ${dl('dC', [...CONFIG.CLASSES, ...c.sets.map(s => s.cls)])}${dl('dS', c.sets.map(s => s.subject))}${dl('dH', c.sets.map(s => s.chapter))}${dl('dN', c.sets.map(s => s.name))}
     <textarea id="aJ" placeholder='return [ { "q": "1. ...", "options": ["(a) ...","(b) ...","(c) ...","(d) ..."], "ans": 0 } ]'></textarea>
     <div class="row"><label><input type="checkbox" id="aA" style="width:auto;margin:0 6px 0 0">Append to existing chapter</label><button class="btn" data-a="save">Publish</button></div></div>
+  <div id="wAdmin"></div>
   <div class="card"><h2>2 · Manage questions</h2><div class="row"><select id="mSet" style="flex:1;margin:0"><option value="">Choose chapter…</option>
-    ${c.sets.map(s => `<option value="${esc(s.id)}" ${s.id === AD.setId ? 'selected' : ''}>${esc(s.id)} · ${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} › ${esc(s.name)} (${s.n})</option>`).join('')}</select>
+    ${c.sets.filter(s => s.type !== 'written').map(s => `<option value="${esc(s.id)}" ${s.id === AD.setId ? 'selected' : ''}>${esc(s.id)} · ${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} › ${esc(s.name)} (${s.n})</option>`).join('')}</select>
     <button class="btn s sm" data-a="mLoad">Load</button><button class="btn del sm" data-a="mDelSet">Delete chapter</button></div><div id="mSetForm"></div><div id="mList" style="margin-top:12px"></div></div>
   <div class="card"><h2>Users</h2><p class="mu">Open any user's full history and performance.</p><div class="tw"><table><tr><th>User</th><th>Tests</th><th>Avg %</th><th>Best %</th><th>Last exam</th><th></th></tr>
     ${us.users.map(x => `<tr><td><b>${esc(x.name)}</b> ${x.status !== 'approved' ? `<span class="pill w">${esc(x.status)}</span>` : ''}<div class="mu">${esc(x.cls)} · ${esc(x.roll)} · ${esc(x.email)}</div></td><td>${x.tests}</td><td>${x.avg}</td><td>${x.best}</td><td class="mu">${x.last ? fmtDT(x.last) : '–'}</td>
@@ -33,6 +34,7 @@ VIEWS.admin = async () => {
     <td style="text-align:right"><button class="btn ok sm" data-a="dec" data-k="sol" data-id="${x.id}" data-y="1">Approve</button> <button class="btn no sm" data-a="dec" data-k="sol" data-id="${x.id}">Reject</button></td></tr>`).join('') || '<tr><td class="mu">Nothing pending.</td></tr>'}</table></div></div>
   <div class="card"><h3>Registration approvals (${p.users.length})</h3><div class="tw"><table>${p.users.map(x => `<tr><td><b>${esc(x.name)}</b><div class="mu">${esc(x.email)}</div></td><td class="mu">${esc(x.cls)} · ${esc(x.roll)}</td>
     <td style="text-align:right"><button class="btn ok sm" data-a="dec" data-k="user" data-id="${x.email}" data-y="1">Approve</button> <button class="btn no sm" data-a="dec" data-k="user" data-id="${x.email}">Reject</button></td></tr>`).join('') || '<tr><td class="mu">Nothing pending.</td></tr>'}</table></div></div>`;
+  if (typeof drawWAdmin === 'function') drawWAdmin(c.sets);
   if (AD.setId) act.mLoad();
 };
 function drawSetForm() {
