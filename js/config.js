@@ -16,6 +16,8 @@
    js/analytics.js   Performance Analysis charts
    js/leaderboard.js Leaderboard
    js/share.js       shareable question links (#q=S1-Q003)
+   js/written.js     written exams (student): paper, compressed answer-sheet upload, result
+   js/wadmin.js      written exams (admin): publish, manage, submissions, marking
    js/admin.js       publish / edit / delete questions · approvals
    js/app.js         boot (starts the app)
 
@@ -37,5 +39,11 @@ const CONFIG = {
   DEFAULT_MINS: 30,                              // defaults in the Publish form
   DEFAULT_POS: 2,
   DEFAULT_NEG: 0.25,
-  LEADERBOARD_TOP: 20
+  LEADERBOARD_TOP: 20,
+
+  // ---- Written exams ----
+  PATTERNS: { math: [2, 4, 4], physics: [1, 2, 3, 4] },   // marks of ক, খ, গ, ঘ per creative question (10 marks each). Add your own!
+  DEFAULT_WRITTEN_MINS: 90,
+  DEFAULT_UPLOAD_MINS: 10,
+  COMPRESS: { maxSide: 1600, quality: 0.6, maxMB: 8 }     // answer-sheet photos are shrunk to this before upload (lower quality = smaller)
 };
