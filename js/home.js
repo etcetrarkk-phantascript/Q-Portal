@@ -34,11 +34,17 @@ function drawExams() {
   } else {
     const x = sets.filter(s => s.cls === EX.cls && s.subject === EX.subject);
     const papers = uniq(x.map(s => s.paper)).sort((a, b) => CONFIG.PAPERS.indexOf(a) - CONFIG.PAPERS.indexOf(b));
+    const wTotal = s => JSON.parse(s.pm || '[]').reduce((a, b) => a + b, 0) * s.n;
+    const row = s => s.type === 'written' ? `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} creative question(s) · ${s.mins} min · ${wTotal(s)} marks · upload window ${s.um || 10} min</span><br>
+        <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span></div>
+        <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}">🔗 Share</button> ${s.n ? `<button class="btn" data-a="wstart" data-id="${esc(s.id)}">✍ Start written</button>` : '<span class="pill r">No questions</span>'}</span></div>`
+      : `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} questions · ${s.mins} min · +${s.pos} / −${s.neg}</span><br>
+        <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span> ${s.best != null ? `<span class="pill g">Best ${s.best}%</span>` : ''}</div>
+        <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}" title="Copy link to this exam">🔗 Share</button> ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</span></div>`;
+    const sec = (t, a) => a.length ? `<div class="mu" style="margin:10px 0 0 10px;font-weight:700">${t}</div>${a.map(row).join('')}` : '';
     body = papers.map(p => { const inP = x.filter(s => s.paper === p);
-      return `<div class="card"><h3>${esc(p)}</h3>${uniq(inP.map(s => s.chapter)).map(c => `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>
-        ${inP.filter(s => s.chapter === c).map(s => `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} questions · ${s.mins} min · +${s.pos} / −${s.neg}</span><br>
-          <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span> ${s.best != null ? `<span class="pill g">Best ${s.best}%</span>` : ''}</div>
-          <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}" title="Copy link to this exam">🔗 Share</button> ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</span></div>`).join('')}</div>`).join('')}</div>`; }).join('');
+      return `<div class="card"><h3>${esc(p)}</h3>${uniq(inP.map(s => s.chapter)).map(c => { const rs = inP.filter(s => s.chapter === c);
+        return `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>${sec('MCQ', rs.filter(s => s.type !== 'written'))}${sec('Written (creative)', rs.filter(s => s.type === 'written'))}</div>`; }).join('')}</div>`; }).join('');
   }
   $('#app').innerHTML = crumb + body;
 }
