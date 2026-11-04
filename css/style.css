@@ -72,3 +72,8 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 8px;
  .frame{display:block;position:fixed;inset:0;border:2px solid var(--p);border-radius:6px;pointer-events:none}
  .os{grid-template-columns:1fr 1fr}
 }
+
+.stem{white-space:pre-wrap;background:var(--pl);border-radius:10px;padding:10px 12px;margin:6px 0 10px}
+.wp{display:flex;gap:10px;margin:8px 0;align-items:flex-start}.wp .lb{flex:none;width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.wp .tx{flex:1;white-space:pre-wrap}.wp input{margin:0;width:90px}
+.rmk{font-size:13px;color:var(--mu);font-style:italic}
