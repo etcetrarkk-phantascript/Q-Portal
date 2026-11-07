@@ -51,7 +51,7 @@ VIEWS.wgrade = async (a) => {
       return `<div class="wp" style="flex-wrap:wrap"><span class="lb">${WL[i]}</span><span class="tx" style="min-width:60%">${fq(p.t)}</span>
       <span style="white-space:nowrap"><input type="number" data-wm="${q.n}" data-i="${i}" id="m${q.n}_${i}" min="0" max="${p.m}" step="0.25" value="${mk.m ?? ''}" placeholder="0"> / ${p.m}</span>
       <input id="r${q.n}_${i}" placeholder="Remark / comment (optional)" value="${esc(mk.r || '')}" style="width:100%;margin:0 0 0 36px"></div>`; }).join('')}
-    ${WG.files[q.n] ? `<button class="btn s sm" data-a="wshow" data-id="${esc(x.id)}" data-n="${q.n}">Show answer sheet (${kb(WG.files[q.n].size)})</button><div id="sheet${q.n}"></div>` : '<div class="pill r">No answer sheet uploaded</div>'}</div>`).join('')}
+    ${WG.files[q.n] ? `<div style="margin-top:10px"><b class="mu">Submitted answer sheet</b><div><a class="pill" style="cursor:pointer;margin-top:4px" data-a="wshow" data-id="${esc(x.id)}" data-n="${q.n}">📄 Q${q.n} · ${kb(WG.files[q.n].size)}${(WG.files[q.n].names || []).length ? ' · ' + WG.files[q.n].names.length + ' file(s)' : ''} — click to view</a></div>${(WG.files[q.n].names || []).length ? `<div class="mu">${WG.files[q.n].names.map(esc).join(' · ')}</div>` : ''}</div><div id="sheet${q.n}"></div>` : '<div class="pill r" style="margin-top:10px">No answer sheet uploaded</div>'}</div>`).join('')}
   <div class="card row"><span class="mu">Students see marks &amp; remarks only after you publish.</span><span><button class="btn s" data-a="wmark" data-p="">Save draft</button> <button class="btn ok" data-a="wmark" data-p="1">Save &amp; publish result</button></span></div>`;
   wRecalc();
 };
