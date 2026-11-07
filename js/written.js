@@ -31,8 +31,12 @@ async function filesToPdf(files, say) {
       }
     } else {
       say(`Compressing ${f.name}…`);
-      let bmp; try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); } catch (e) { throw f.name + ': this image format is not supported (iPhone HEIC?). Use JPG/PNG or a PDF.'; }
-      addCanvas(bmp, bmp.width, bmp.height);
+      let bmp; try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); }
+      catch (e) {   // SVG and some formats: fall back to an <img>
+        bmp = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); })
+          .catch(() => { throw f.name + ': this image format is not supported (iPhone HEIC?). Use JPG/PNG/SVG or a PDF.'; });
+      }
+      addCanvas(bmp, bmp.naturalWidth || bmp.width || 1200, bmp.naturalHeight || bmp.height || 1600);
     }
   }
   if (!pages.length) throw 'No pages found in the selected file(s)';
@@ -47,25 +51,23 @@ async function filesToPdf(files, say) {
   return b64;
 }
 
-/* ---- exam / upload screen ---- */
+/* ---- exam screen (read-only paper) + "Submit Answer Sheet" pop-up ---- */
 VIEWS.wexam = () => {
   clearInterval(WT);
   const st = WE.status, set = WE.set;
   if (st === 'writing') {
-    $('#app').innerHTML = `<div class="stick"><span style="font-size:13px">${esc(set.chapter)} · ${esc(set.name)}</span><b id="wtm"></b><button class="btn sm" style="background:#fff;color:var(--p)" data-a="wend">End exam</button></div>
-    ${paperHtml(WE.qs)}<div class="card row"><span class="mu">Write on paper. When you end the exam you get ${set.um} minutes to upload your answer sheets.</span><button class="btn" data-a="wend">End exam &amp; upload</button></div>`;
+    $('#app').innerHTML = `<div class="stick"><span style="font-size:13px">${esc(set.chapter)} · ${esc(set.name)}</span><b id="wtm"></b><button class="btn sm" style="background:#fff;color:var(--p)" data-a="wend">Submit Answer Sheet</button></div>
+    ${paperHtml(WE.qs)}<div class="card row"><span class="mu">Write your answers on paper. When you finish (or time ends) upload photos/PDFs of your answer sheet — you get ${set.um} minutes for the upload.</span><button class="btn" data-a="wend">Submit Answer Sheet</button></div>`;
     const end = Date.now() + WE.secLeft * 1000;
     const tick = () => { const s = (end - Date.now()) / 1000; if ($('#wtm')) $('#wtm').textContent = wtime(s); if (V !== 'wexam') clearInterval(WT); else if (s <= 0) { clearInterval(WT); act.wend({}, null, true); } };
     tick(); WT = setInterval(tick, 500);
   } else if (st === 'upload') {
-    $('#app').innerHTML = `<div class="stick"><span style="font-size:13px">Upload answer sheets · ${esc(set.name)}</span><b id="wtm"></b><button class="btn sm" style="background:#fff;color:var(--p)" data-a="wfinish">Finish</button></div>
-    <div class="card"><h3>Upload your answer for each question set</h3><p class="mu">Photos (JPG, PNG…) or PDF; several files per question are fine. They are compressed and merged into one PDF automatically. You can re-upload a question until time runs out.</p>
-    <button class="btn s sm" data-a="wupall">Upload everything selected</button></div>
-    ${WE.qs.map(q => `<div class="card"><div class="row"><b>প্রশ্ন ${q.n}</b><span class="mu" id="ws${q.n}">${WE.files[q.n] ? '✓ Uploaded ' + kb(WE.files[q.n].size) : 'Not uploaded yet'}</span></div>
-      <input type="file" multiple accept="image/*,application/pdf,.pdf" data-wn="${q.n}"><div class="mu" id="wl${q.n}"></div>
-      <button class="btn sm" data-a="wup" data-n="${q.n}">Upload question ${q.n}</button></div>`).join('')}
+    $('#app').innerHTML = `<div class="ov"><div class="ovb"><div class="row"><h2>Submit Answer Sheet</h2><span class="tmb" id="wtm"></span></div>
+    <p class="mu">Add one or more photos (JPG, PNG, SVG…) or PDFs for each question. They are compressed and saved automatically when you press Submit.</p>
+    ${WE.qs.map(q => `<div class="card"><div class="row"><b>প্রশ্ন ${q.n}</b><span class="mu" id="ws${q.n}">${WE.files[q.n] ? '✓ Already uploaded (' + kb(WE.files[q.n].size) + ') — choose files to replace' : 'No file yet'}</span></div>
+      <input type="file" multiple accept="image/*,.svg,application/pdf,.pdf" data-wn="${q.n}"><div class="mu" id="wl${q.n}"></div></div>`).join('')}
     <details class="card"><summary><b>View question paper</b></summary>${paperHtml(WE.qs)}</details>
-    <div class="card row"><span class="mu">Press Finish when every answer is uploaded.</span><button class="btn" data-a="wfinish">Finish submission</button></div>`;
+    <div class="row"><span class="mu">Upload time left is shown at the top right.</span><button class="btn" data-a="wsubmit">Submit</button></div></div></div>`;
     const end = Date.now() + WE.upLeft * 1000;
     const tick = () => { const s = (end - Date.now()) / 1000; if ($('#wtm')) $('#wtm').textContent = wtime(s); if (V !== 'wexam') clearInterval(WT); else if (s <= 0) { clearInterval(WT); toast('Upload time is over.'); go('hist'); } };
     tick(); WT = setInterval(tick, 500);
@@ -106,26 +108,23 @@ function drawWHist() {
 
 Object.assign(act, {
   wstart: async (d) => { WE = await api('wStart', { id: d.id }); WF = {}; go('wexam'); },
-  wend: async (d, b, auto) => {
-    if (!auto && !confirm('End the exam now and start uploading your answer sheets?')) return;
+  wend: async (d, bt, auto) => {
+    if (!auto && !confirm('Submit your answer sheet now? Writing time ends and the ' + WE.set.um + '-minute upload window starts.')) return;
     clearInterval(WT); WE = await api('wEnd', { id: WE.attempt.id }); WF = {}; go('wexam');
   },
-  wup: async (d) => {
-    const n = +d.n, fs = WF[n];
-    if (!fs || !fs.length) throw 'Choose photos or a PDF for question ' + n + ' first';
-    wsay(n, 'Compressing…'); const b64 = await filesToPdf(fs, m => wsay(n, m));
-    wsay(n, 'Uploading ' + kb(b64.length * 0.75) + '…');
-    const j = await api('wUpload', { id: WE.attempt.id, n, data: b64 }); WE.files = j.files; wsay(n, '✓ Uploaded ' + kb(j.files[n].size));
-  },
-  wupall: async () => {
-    const ns = Object.keys(WF).filter(n => WF[n] && WF[n].length); if (!ns.length) throw 'Select files for at least one question first';
-    for (const n of ns) { try { await act.wup({ n }); } catch (e) { wsay(n, '⚠ ' + (typeof e === 'string' ? e : e.message)); } }
-    toast('Done. Check each question shows ✓ Uploaded.');
-  },
-  wfinish: async () => {
-    const miss = WE.qs.filter(q => !WE.files[q.n]).map(q => q.n);
-    if (!confirm(miss.length ? 'No answer uploaded for question ' + miss.join(', ') + '. Finish anyway?' : 'Finish submission?')) return;
-    clearInterval(WT); await api('wFinish', { id: WE.attempt.id }); WE = null; toast('Submitted. Your marks will appear after the admin publishes the result.'); go('hist');
+  wsubmit: async () => {
+    const ns = WE.qs.map(q => q.n), todo = ns.filter(n => WF[n] && WF[n].length), miss = ns.filter(n => !todo.includes(n) && !WE.files[n]);
+    if (!todo.length && miss.length === ns.length) throw 'Add at least one photo or PDF first';
+    if (miss.length && !confirm('No answer added for question ' + miss.join(', ') + '. Submit anyway?')) return;
+    let bad = 0;
+    for (const n of todo) {
+      try {
+        wsay(n, 'Compressing…'); const b64 = await filesToPdf(WF[n], m => wsay(n, m)); wsay(n, 'Uploading ' + kb(b64.length * 0.75) + '…');
+        const j = await api('wUpload', { id: WE.attempt.id, n, data: b64, names: WF[n].map(f => f.name) }); WE.files = j.files; WF[n] = []; wsay(n, '✓ Uploaded ' + kb(j.files[n].size));
+      } catch (e) { bad++; wsay(n, '⚠ ' + (typeof e === 'string' ? e : e.message)); }
+    }
+    if (bad) throw 'Some files failed — fix them and press Submit again.';
+    clearInterval(WT); await api('wFinish', { id: WE.attempt.id }); WE = null; toast('Answer sheet submitted. Marks appear after the admin publishes the result.'); go('hist');
   },
   wres: (d) => go('wresult', { id: d.id }),
   wshow: (d) => loadSheet(d.id, d.n)
