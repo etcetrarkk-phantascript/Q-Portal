@@ -44,7 +44,7 @@ function drawExams() {
     const sec = (t, a) => a.length ? `<div class="mu" style="margin:10px 0 0 10px;font-weight:700">${t}</div>${a.map(row).join('')}` : '';
     body = papers.map(p => { const inP = x.filter(s => s.paper === p);
       return `<div class="card"><h3>${esc(p)}</h3>${uniq(inP.map(s => s.chapter)).map(c => { const rs = inP.filter(s => s.chapter === c);
-        return `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>${sec('MCQ', rs.filter(s => s.type !== 'written'))}${sec('Written (creative)', rs.filter(s => s.type === 'written'))}</div>`; }).join('')}</div>`; }).join('');
+        return `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>${sec('MCQ', rs.filter(s => s.type !== 'written'))}${sec('CQ (written)', rs.filter(s => s.type === 'written'))}</div>`; }).join('')}</div>`; }).join('');
   }
   $('#app').innerHTML = crumb + body;
 }
