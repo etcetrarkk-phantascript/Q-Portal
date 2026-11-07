@@ -65,7 +65,7 @@ VIEWS.wexam = () => {
     $('#app').innerHTML = `<div class="ov"><div class="ovb"><div class="row"><h2>Submit Answer Sheet</h2><span class="tmb" id="wtm"></span></div>
     <p class="mu">Add one or more photos (JPG, PNG, SVG…) or PDFs for each question. They are compressed and saved automatically when you press Submit.</p>
     ${WE.qs.map(q => `<div class="card"><div class="row"><b>প্রশ্ন ${q.n}</b><span class="mu" id="ws${q.n}">${WE.files[q.n] ? '✓ Already uploaded (' + kb(WE.files[q.n].size) + ') — choose files to replace' : 'No file yet'}</span></div>
-      <input type="file" multiple accept="image/*,.svg,application/pdf,.pdf" data-wn="${q.n}"><div class="mu" id="wl${q.n}"></div></div>`).join('')}
+      <input type="file" multiple hidden id="wi${q.n}" accept="image/*,.svg,application/pdf,.pdf" data-wn="${q.n}"><div id="wl${q.n}"></div><button class="btn s sm" data-a="wadd" data-n="${q.n}">＋ Add photo / PDF</button></div>`).join('')}
     <details class="card"><summary><b>View question paper</b></summary>${paperHtml(WE.qs)}</details>
     <div class="row"><span class="mu">Upload time left is shown at the top right.</span><button class="btn" data-a="wsubmit">Submit</button></div></div></div>`;
     const end = Date.now() + WE.upLeft * 1000;
@@ -73,9 +73,10 @@ VIEWS.wexam = () => {
     tick(); WT = setInterval(tick, 500);
   } else { toast('This exam is already submitted.'); go('hist'); }
 };
-document.addEventListener('change', (e) => {
+const wlist = (n) => { const el = $('#wl' + n); if (el) el.innerHTML = (WF[n] || []).map((f, i) => `<div class="row" style="padding:4px 0"><span>📎 ${esc(f.name)} <span class="mu">(${kb(f.size)})</span></span><a data-a="wrm" data-n="${n}" data-i="${i}" style="cursor:pointer;color:var(--r);font-weight:700">✕</a></div>`).join(''); };
+document.addEventListener('change', (e) => {   // each "+ Add" appends to the list for that question
   const n = e.target.dataset && e.target.dataset.wn; if (!n) return;
-  WF[n] = [...e.target.files]; $('#wl' + n).textContent = WF[n].map(f => f.name + ' (' + kb(f.size) + ')').join(' · ');
+  WF[n] = (WF[n] || []).concat([...e.target.files]); e.target.value = ''; wlist(n);
 });
 const wsay = (n, m) => { const el = $('#ws' + n); if (el) el.textContent = m; };
 
@@ -112,6 +113,8 @@ Object.assign(act, {
     if (!auto && !confirm('Submit your answer sheet now? Writing time ends and the ' + WE.set.um + '-minute upload window starts.')) return;
     clearInterval(WT); WE = await api('wEnd', { id: WE.attempt.id }); WF = {}; go('wexam');
   },
+  wadd: (d) => $('#wi' + d.n).click(),
+  wrm: (d) => { WF[d.n].splice(+d.i, 1); wlist(d.n); },
   wsubmit: async () => {
     const ns = WE.qs.map(q => q.n), todo = ns.filter(n => WF[n] && WF[n].length), miss = ns.filter(n => !todo.includes(n) && !WE.files[n]);
     if (!todo.length && miss.length === ns.length) throw 'Add at least one photo or PDF first';
@@ -120,7 +123,7 @@ Object.assign(act, {
     for (const n of todo) {
       try {
         wsay(n, 'Compressing…'); const b64 = await filesToPdf(WF[n], m => wsay(n, m)); wsay(n, 'Uploading ' + kb(b64.length * 0.75) + '…');
-        const j = await api('wUpload', { id: WE.attempt.id, n, data: b64, names: WF[n].map(f => f.name) }); WE.files = j.files; WF[n] = []; wsay(n, '✓ Uploaded ' + kb(j.files[n].size));
+        const j = await api('wUpload', { id: WE.attempt.id, n, data: b64, names: WF[n].map(f => f.name) }); WE.files = j.files; WF[n] = []; wlist(n); wsay(n, '✓ Uploaded ' + kb(j.files[n].size));
       } catch (e) { bad++; wsay(n, '⚠ ' + (typeof e === 'string' ? e : e.message)); }
     }
     if (bad) throw 'Some files failed — fix them and press Submit again.';
