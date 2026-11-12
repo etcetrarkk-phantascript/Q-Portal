@@ -98,15 +98,6 @@ async function loadSheet(id, n) {
   $('#sheet' + n).innerHTML = `<p><a class="btn sm" href="${url}" target="_blank">Open / download PDF</a> <span class="mu">${esc(j.name)} · ${kb(bytes.length)}</span></p><iframe src="${url}" style="width:100%;height:520px;border:1px solid var(--bd);border-radius:10px"></iframe>`;
 }
 
-/* ---- History section ---- */
-function drawWHist() {
-  if (S.u.role === 'admin' || !WH.length) return;
-  $('#app').insertAdjacentHTML('beforeend', `<div class="card"><h2>Written exams</h2><div class="tw"><table><tr><th>Date</th><th>Exam</th><th>Attempt</th><th>Status</th><th>Marks</th><th></th></tr>
-  ${WH.map(r => `<tr><td class="mu">${fmtDT(r.ts)}</td><td><b>${esc(r.chapter)}</b> <span class="pill">${esc(r.setName)}</span><div class="mu">${esc(r.cls)} · ${esc(r.subject)} · ${esc(r.paper)}</div></td><td>#${r.no}</td>
-  <td><span class="pill ${r.status === 'published' ? 'g' : 'w'}">${WST[r.status] || r.status}</span></td><td>${r.obtained != null ? `<b>${r.obtained} / ${r.total}</b>` : '–'}</td>
-  <td>${r.status === 'published' ? `<button class="btn ok sm" data-a="wres" data-id="${r.id}">View result</button>` : (r.status === 'writing' || r.status === 'upload') ? `<button class="btn sm" data-a="wstart" data-id="${r.setId}">Continue</button>` : ''}</td></tr>`).join('')}</table></div></div>`);
-}
-
 Object.assign(act, {
   wstart: async (d) => { WE = await api('wStart', { id: d.id }); WF = {}; go('wexam'); },
   wend: async (d, bt, auto) => {
