@@ -15,7 +15,8 @@ VIEWS.admin = async () => {
   AD.sets = c.sets;
   const dl = (id, arr) => `<datalist id="${id}">${[...new Set(arr)].map(v => `<option value="${esc(v)}">`).join('')}</datalist>`;
   $('#app').innerHTML = `
-  <div class="card"><h2>1 · Publish questions</h2><p class="mu">Paste the Gemini array. <b>Set name</b> tells sets apart: same chapter + same name = replaced (or tick Append to add); a new name = a separate set. Leave it empty to auto-name "Set 2", "Set 3"… IDs are assigned automatically.</p>
+  <div class="asec"><h2 class="sec">MCQ questions</h2>
+  <div class="card"><h2>1 · Publish MCQ questions</h2><p class="mu">Paste the Gemini array. <b>Set name</b> tells sets apart: same chapter + same name = replaced (or tick Append to add); a new name = a separate set. Leave it empty to auto-name "Set 2", "Set 3"… IDs are assigned automatically.</p>
     <div class="g4" style="margin-top:10px"><div><label>Class</label><input id="aC" list="dC" value="${esc(CONFIG.CLASSES[0])}"></div><div><label>Subject</label><input id="aS" list="dS" placeholder="Physics"></div>
     <div><label>Paper</label><select id="aP">${CONFIG.PAPERS.map(x => `<option>${esc(x)}</option>`).join('')}</select></div><div><label>Chapter</label><input id="aH" list="dH" placeholder="Chapter 2: Static Electricity"></div>
     <div><label>Set name (required)</label><input id="aN" list="dN" placeholder="e.g. Set 1, Model Test"></div>
@@ -23,10 +24,11 @@ VIEWS.admin = async () => {
     ${dl('dC', [...CONFIG.CLASSES, ...c.sets.map(s => s.cls)])}${dl('dS', c.sets.map(s => s.subject))}${dl('dH', c.sets.map(s => s.chapter))}${dl('dN', c.sets.map(s => s.name))}
     <textarea id="aJ" placeholder='return [ { "q": "1. ...", "options": ["(a) ...","(b) ...","(c) ...","(d) ..."], "ans": 0 } ]'></textarea>
     <div class="row"><label><input type="checkbox" id="aA" style="width:auto;margin:0 6px 0 0">Append to existing chapter</label><button class="btn" data-a="save">Publish</button></div></div>
-  <div id="wAdmin"></div>
   <div class="card"><h2>2 · Manage questions</h2><div class="row"><select id="mSet" style="flex:1;margin:0"><option value="">Choose chapter…</option>
     ${c.sets.filter(s => s.type !== 'written').map(s => `<option value="${esc(s.id)}" ${s.id === AD.setId ? 'selected' : ''}>${esc(s.id)} · ${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} › ${esc(s.name)} (${s.n})</option>`).join('')}</select>
     <button class="btn s sm" data-a="mLoad">Load</button><button class="btn del sm" data-a="mDelSet">Delete chapter</button></div><div id="mSetForm"></div><div id="mList" style="margin-top:12px"></div></div>
+  </div>
+  <div id="wAdmin" class="asec"></div>
   <div class="card"><h2>Users</h2><p class="mu">Open any user's full history and performance.</p><div class="tw"><table><tr><th>User</th><th>Tests</th><th>Avg %</th><th>Best %</th><th>Last exam</th><th></th></tr>
     ${us.users.map(x => `<tr><td><b>${esc(x.name)}</b> ${x.status !== 'approved' ? `<span class="pill w">${esc(x.status)}</span>` : ''}<div class="mu">${esc(x.cls)} · ${esc(x.roll)} · ${esc(x.email)}</div></td><td>${x.tests}</td><td>${x.avg}</td><td>${x.best}</td><td class="mu">${x.last ? fmtDT(x.last) : '–'}</td>
     <td style="white-space:nowrap"><button class="btn s sm" data-a="uHist" data-e="${esc(x.email)}" data-n="${esc(x.name)}">History</button> <button class="btn sm" data-a="uPerf" data-e="${esc(x.email)}" data-n="${esc(x.name)}">Performance</button></td></tr>`).join('') || '<tr><td class="mu">No users yet.</td></tr>'}</table></div></div>
