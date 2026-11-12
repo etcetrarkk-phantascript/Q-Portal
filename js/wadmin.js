@@ -11,8 +11,8 @@ const wSetLabel = (s) => `${s.id} · ${s.cls} › ${s.subject} › ${s.paper} �
 function drawWAdmin(sets) {
   WA.sets = sets.filter(s => s.type === 'written');
   const ws = WA.sets, opt = (sel) => ws.map(s => `<option value="${esc(s.id)}" ${s.id === sel ? 'selected' : ''}>${esc(wSetLabel(s))}</option>`).join('');
-  $('#wAdmin').innerHTML = `
-  <div class="card"><h2>1b · Publish written exam</h2><p class="mu">Creative questions: each has a context (<b>uddipok</b>) and parts ক, খ, গ, (ঘ). Same chapter + same set name = replaced (or tick Append).</p>
+  $('#wAdmin').innerHTML = `<h2 class="sec">CQ (written) questions</h2>
+  <div class="card"><h2>1b · Publish CQ questions</h2><p class="mu">Creative questions: each has a context (<b>uddipok</b>) and parts ক, খ, গ, (ঘ). Same chapter + same set name = replaced (or tick Append).</p>
     <div class="g4" style="margin-top:10px"><div><label>Class</label><input id="wC" list="dC" value="${esc(CONFIG.CLASSES[0])}"></div><div><label>Subject</label><input id="wS" list="dS"></div>
     <div><label>Paper</label><select id="wP">${CONFIG.PAPERS.map(x => `<option>${esc(x)}</option>`).join('')}</select></div><div><label>Chapter</label><input id="wH" list="dH"></div>
     <div><label>Set name (required)</label><input id="wN" list="dN" placeholder="e.g. Written Set 1"></div>
@@ -21,8 +21,8 @@ function drawWAdmin(sets) {
     <div><label>Exam time (minutes)</label><input id="wM" type="number" value="${CONFIG.DEFAULT_WRITTEN_MINS}"></div>
     <div><label>Answer-upload window (minutes)</label><input id="wU" type="number" value="${CONFIG.DEFAULT_UPLOAD_MINS}"></div></div>
     <textarea id="wJ" placeholder='return [ { "uddipok": "উদ্দীপক… (একাধিক উদ্দীপক একই টেক্সটে লিখুন)", "ka": "…", "kha": "…", "ga": "…", "gha": "…" } ]  (math: only ka, kha, ga)'></textarea>
-    <div class="row"><label><input type="checkbox" id="wA" style="width:auto;margin:0 6px 0 0">Append to existing set</label><button class="btn" data-a="wsave">Publish written exam</button></div></div>
-  <div class="card"><h2>1c · Manage written questions</h2><div class="row"><select id="wmSet" style="flex:1;margin:0"><option value="">Choose written set…</option>${opt(WA.setId)}</select>
+    <div class="row"><label><input type="checkbox" id="wA" style="width:auto;margin:0 6px 0 0">Append to existing set</label><button class="btn" data-a="wsave">Publish CQ questions</button></div></div>
+  <div class="card"><h2>1c · Manage CQ questions</h2><div class="row"><select id="wmSet" style="flex:1;margin:0"><option value="">Choose written set…</option>${opt(WA.setId)}</select>
     <button class="btn s sm" data-a="wmLoad">Load</button><button class="btn del sm" data-a="wmDelSet">Delete set</button></div><div id="wmForm"></div><div id="wmList" style="margin-top:12px"></div></div>
   <div class="card"><h2>1d · Written submissions &amp; marking</h2><p class="mu">Pick a set, then open a student's <b>Exam Paper</b> to read the uploaded answer sheets and give marks.</p>
     <div class="row"><select id="wsSet" style="flex:1;margin:0"><option value="">All written sets</option>${opt('')}</select><button class="btn s sm" data-a="wsLoad">Show submissions</button></div><div id="wsList" style="margin-top:12px"></div></div>`;
