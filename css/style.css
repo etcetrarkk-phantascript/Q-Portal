@@ -81,3 +81,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 8px;
 .ov{position:fixed;inset:0;background:rgba(27,24,48,.6);z-index:40;overflow:auto;padding:12px}
 .ovb{max-width:780px;margin:16px auto;background:var(--bg);border-radius:16px;padding:18px}
 .tmb{font:700 18px ui-monospace,monospace;background:var(--p);color:#fff;border-radius:10px;padding:4px 12px}
+
+.asec{background:#ece8fb;border-radius:18px;padding:12px 12px 2px;margin-bottom:20px}
+.asec .card{margin-bottom:12px}
+h2.sec{margin:2px 4px 12px;color:var(--p);font-size:18px;letter-spacing:.02em}
