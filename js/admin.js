@@ -16,16 +16,16 @@ VIEWS.admin = async () => {
   const dl = (id, arr) => `<datalist id="${id}">${[...new Set(arr)].map(v => `<option value="${esc(v)}">`).join('')}</datalist>`;
   $('#app').innerHTML = `
   <div class="asec"><h2 class="sec">MCQ questions</h2>
-  <div class="card"><h2>1 · Publish MCQ questions</h2><p class="mu">Paste the Gemini array. <b>Set name</b> tells sets apart: same chapter + same name = replaced (or tick Append to add); a new name = a separate set. Leave it empty to auto-name "Set 2", "Set 3"… IDs are assigned automatically.</p>
+  <div class="card"><h2>1a · Publish MCQ questions</h2><p class="mu">Paste the Gemini array. <b>Set name</b> tells sets apart: same chapter + same name = replaced (or tick Append to add); a new name = a separate set. Leave it empty to auto-name "Set 2", "Set 3"… IDs are assigned automatically.</p>
     <div class="g4" style="margin-top:10px"><div><label>Class</label><input id="aC" list="dC" value="${esc(CONFIG.CLASSES[0])}"></div><div><label>Subject</label><input id="aS" list="dS" placeholder="Physics"></div>
     <div><label>Paper</label><select id="aP">${CONFIG.PAPERS.map(x => `<option>${esc(x)}</option>`).join('')}</select></div><div><label>Chapter</label><input id="aH" list="dH" placeholder="Chapter 2: Static Electricity"></div>
     <div><label>Set name (required)</label><input id="aN" list="dN" placeholder="e.g. Set 1, Model Test"></div>
     <div><label>Time (minutes)</label><input id="aM" type="number" value="${CONFIG.DEFAULT_MINS}"></div><div><label>Marks / correct</label><input id="aPo" type="number" step=".25" value="${CONFIG.DEFAULT_POS}"></div><div><label>Negative / wrong</label><input id="aNe" type="number" step=".05" value="${CONFIG.DEFAULT_NEG}"></div></div>
     ${dl('dC', [...CONFIG.CLASSES, ...c.sets.map(s => s.cls)])}${dl('dS', c.sets.map(s => s.subject))}${dl('dH', c.sets.map(s => s.chapter))}${dl('dN', c.sets.map(s => s.name))}
     <textarea id="aJ" placeholder='return [ { "q": "1. ...", "options": ["(a) ...","(b) ...","(c) ...","(d) ..."], "ans": 0 } ]'></textarea>
-    <div class="row"><label><input type="checkbox" id="aA" style="width:auto;margin:0 6px 0 0">Append to existing chapter</label><button class="btn" data-a="save">Publish</button></div></div>
-  <div class="card"><h2>2 · Manage questions</h2><div class="row"><select id="mSet" style="flex:1;margin:0"><option value="">Choose chapter…</option>
-    ${c.sets.filter(s => s.type !== 'written').map(s => `<option value="${esc(s.id)}" ${s.id === AD.setId ? 'selected' : ''}>${esc(s.id)} · ${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} › ${esc(s.name)} (${s.n})</option>`).join('')}</select>
+    <div class="row"><span><label><input type="checkbox" id="aA" style="width:auto;margin:0 6px 0 0">Append to existing chapter</label><br><label><input type="checkbox" id="aHid" style="width:auto;margin:0 6px 0 0">🔒 Publish hidden (students cannot see it until you show it)</label></span><button class="btn" data-a="save">Publish</button></div></div>
+  <div class="card"><h2>1b · Manage MCQ questions</h2><div class="row"><select id="mSet" style="flex:1;margin:0"><option value="">Choose chapter…</option>
+    ${c.sets.filter(s => s.type !== 'written').map(s => `<option value="${esc(s.id)}" ${s.id === AD.setId ? 'selected' : ''}>${s.hidden ? '🔒 ' : ''}${esc(s.id)} · ${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} › ${esc(s.name)} (${s.n})</option>`).join('')}</select>
     <button class="btn s sm" data-a="mLoad">Load</button><button class="btn del sm" data-a="mDelSet">Delete chapter</button></div><div id="mSetForm"></div><div id="mList" style="margin-top:12px"></div></div>
   </div>
   <div id="wAdmin" class="asec"></div>
@@ -43,7 +43,7 @@ function drawSetForm() {
   const s = AD.sets.find(x => x.id === AD.setId);
   if (!s) { $('#mSetForm').innerHTML = ''; return; }
   const papers = [...new Set([...CONFIG.PAPERS, s.paper])], f = (id, l, v, t = 'text') => `<div><label>${l}</label><input id="${id}" type="${t}" step="any" value="${esc(v)}"></div>`;
-  $('#mSetForm').innerHTML = `<div class="card" style="background:var(--pl);margin:12px 0 0"><h3>Set details · ${esc(s.id)}</h3><div class="g4">
+  $('#mSetForm').innerHTML = `<div class="card" style="background:var(--pl);margin:12px 0 0"><div class="row" style="margin-bottom:8px"><span>${s.hidden ? '🔒 <b>Hidden</b> from students' : '👁 <b>Visible</b> to students'}</span><button class="btn ${s.hidden ? 'ok' : 'del'} sm" data-a="mToggle">${s.hidden ? 'Show to students' : 'Hide from students'}</button></div><h3>Set details · ${esc(s.id)}</h3><div class="g4">
     ${f('sC', 'Class', s.cls)}${f('sS', 'Subject', s.subject)}<div><label>Paper</label><select id="sP">${papers.map(x => `<option ${x === s.paper ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
     ${f('sH', 'Chapter', s.chapter)}${f('sN', 'Set name', s.name)}${f('sM', 'Time (minutes)', s.mins, 'number')}${f('sPo', 'Marks / correct', s.pos, 'number')}${f('sNe', 'Negative / wrong', s.neg, 'number')}</div>
     <button class="btn ok sm" data-a="mSaveSet">Save set details</button> <span class="mu">Marks changes apply to future attempts; old results keep their saved marks.</span></div>`;
@@ -57,7 +57,7 @@ Object.assign(act, {
   save: async () => {
     if (!val('aN').trim()) throw 'Enter a Set name first (e.g. Set 1, Model Test)';
     const qs = parseQs(val('aJ')), cls = val('aC').trim(), subject = val('aS').trim(), paper = val('aP'), chapter = val('aH').trim();
-    const j = await api('saveSet', { cls, subject, paper, chapter, name: val('aN').trim(), mins: val('aM'), pos: val('aPo'), neg: val('aNe'), append: $('#aA').checked, qs });
+    const j = await api('saveSet', { cls, subject, paper, chapter, name: val('aN').trim(), mins: val('aM'), pos: val('aPo'), neg: val('aNe'), append: $('#aA').checked, hidden: $('#aHid').checked, qs });
     toast(`${j.replaced ? 'Replaced' : 'Saved'} “${j.name}” (${j.setId}): ${j.added} questions. Opening Exams…`);
     go('exams', { cls: j.cls, subject: j.subject });
   },
@@ -86,6 +86,10 @@ Object.assign(act, {
     if (!AD.setId && !(AD.setId = val('mSet'))) return toast('Choose a chapter first');
     if (!confirm('Delete the whole chapter and all its questions? Past results stay in History but their sheets will no longer open.')) return;
     await api('delSet', { id: AD.setId }); AD.setId = ''; AD.qs = []; toast('Chapter deleted'); go('admin');
+  },
+  mToggle: async () => {
+    const s = AD.sets.find(x => x.id === AD.setId); if (!s) return;
+    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); go('admin');
   },
   mSaveSet: async () => {
     await api('editSet', { id: AD.setId, cls: val('sC'), subject: val('sS'), paper: val('sP'), chapter: val('sH'), name: val('sN'), mins: val('sM'), pos: val('sPo'), neg: val('sNe') });
