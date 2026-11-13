@@ -6,13 +6,13 @@ const wParse = (t) => {
   let a; try { a = JSON.parse(t.slice(i, j + 1)); } catch (e) { a = new Function('return ' + t.slice(i, j + 1))(); }
   if (!Array.isArray(a) || !a.length) throw 'Array is empty'; return a;
 };
-const wSetLabel = (s) => `${s.id} · ${s.cls} › ${s.subject} › ${s.paper} › ${s.chapter} › ${s.name} (${s.n} Q)`;
+const wSetLabel = (s) => `${s.hidden ? '🔒 ' : ''}${s.id} · ${s.cls} › ${s.subject} › ${s.paper} › ${s.chapter} › ${s.name} (${s.n} Q)`;
 
 function drawWAdmin(sets) {
   WA.sets = sets.filter(s => s.type === 'written');
   const ws = WA.sets, opt = (sel) => ws.map(s => `<option value="${esc(s.id)}" ${s.id === sel ? 'selected' : ''}>${esc(wSetLabel(s))}</option>`).join('');
   $('#wAdmin').innerHTML = `<h2 class="sec">CQ (written) questions</h2>
-  <div class="card"><h2>1b · Publish CQ questions</h2><p class="mu">Creative questions: each has a context (<b>uddipok</b>) and parts ক, খ, গ, (ঘ). Same chapter + same set name = replaced (or tick Append).</p>
+  <div class="card"><h2>2a · Publish CQ questions</h2><p class="mu">Creative questions: each has a context (<b>uddipok</b>) and parts ক, খ, গ, (ঘ). Same chapter + same set name = replaced (or tick Append).</p>
     <div class="g4" style="margin-top:10px"><div><label>Class</label><input id="wC" list="dC" value="${esc(CONFIG.CLASSES[0])}"></div><div><label>Subject</label><input id="wS" list="dS"></div>
     <div><label>Paper</label><select id="wP">${CONFIG.PAPERS.map(x => `<option>${esc(x)}</option>`).join('')}</select></div><div><label>Chapter</label><input id="wH" list="dH"></div>
     <div><label>Set name (required)</label><input id="wN" list="dN" placeholder="e.g. Written Set 1"></div>
@@ -21,16 +21,16 @@ function drawWAdmin(sets) {
     <div><label>Exam time (minutes)</label><input id="wM" type="number" value="${CONFIG.DEFAULT_WRITTEN_MINS}"></div>
     <div><label>Answer-upload window (minutes)</label><input id="wU" type="number" value="${CONFIG.DEFAULT_UPLOAD_MINS}"></div></div>
     <textarea id="wJ" placeholder='return [ { "uddipok": "উদ্দীপক… (একাধিক উদ্দীপক একই টেক্সটে লিখুন)", "ka": "…", "kha": "…", "ga": "…", "gha": "…" } ]  (math: only ka, kha, ga)'></textarea>
-    <div class="row"><label><input type="checkbox" id="wA" style="width:auto;margin:0 6px 0 0">Append to existing set</label><button class="btn" data-a="wsave">Publish CQ questions</button></div></div>
-  <div class="card"><h2>1c · Manage CQ questions</h2><div class="row"><select id="wmSet" style="flex:1;margin:0"><option value="">Choose written set…</option>${opt(WA.setId)}</select>
+    <div class="row"><span><label><input type="checkbox" id="wA" style="width:auto;margin:0 6px 0 0">Append to existing set</label><br><label><input type="checkbox" id="wHid" style="width:auto;margin:0 6px 0 0">🔒 Publish hidden (students cannot see it until you show it)</label></span><button class="btn" data-a="wsave">Publish CQ questions</button></div></div>
+  <div class="card"><h2>2b · Manage CQ questions</h2><div class="row"><select id="wmSet" style="flex:1;margin:0"><option value="">Choose written set…</option>${opt(WA.setId)}</select>
     <button class="btn s sm" data-a="wmLoad">Load</button><button class="btn del sm" data-a="wmDelSet">Delete set</button></div><div id="wmForm"></div><div id="wmList" style="margin-top:12px"></div></div>
-  <div class="card"><h2>1d · Written submissions &amp; marking</h2><p class="mu">Pick a set, then open a student's <b>Exam Paper</b> to read the uploaded answer sheets and give marks.</p>
+  <div class="card"><h2>2c · Written submissions &amp; marking</h2><p class="mu">Pick a set, then open a student's <b>Exam Paper</b> to read the uploaded answer sheets and give marks.</p>
     <div class="row"><select id="wsSet" style="flex:1;margin:0"><option value="">All written sets</option>${opt('')}</select><button class="btn s sm" data-a="wsLoad">Show submissions</button></div><div id="wsList" style="margin-top:12px"></div></div>`;
 }
 function drawWm() {
   const s = WA.sets.find(x => x.id === WA.setId); if (!s) { $('#wmForm').innerHTML = ''; $('#wmList').innerHTML = ''; return; }
   const f = (id, l, v, t = 'text') => `<div><label>${l}</label><input id="${id}" type="${t}" value="${esc(v)}"></div>`;
-  $('#wmForm').innerHTML = `<div class="card" style="background:var(--pl);margin:12px 0 0"><h3>Set details · ${esc(s.id)}</h3><div class="g4">${f('xC', 'Class', s.cls)}${f('xS', 'Subject', s.subject)}${f('xP', 'Paper', s.paper)}${f('xH', 'Chapter', s.chapter)}${f('xN', 'Set name', s.name)}
+  $('#wmForm').innerHTML = `<div class="card" style="background:var(--pl);margin:12px 0 0"><div class="row" style="margin-bottom:8px"><span>${s.hidden ? '🔒 <b>Hidden</b> from students' : '👁 <b>Visible</b> to students'}</span><button class="btn ${s.hidden ? 'ok' : 'del'} sm" data-a="wmToggle">${s.hidden ? 'Show to students' : 'Hide from students'}</button></div><h3>Set details · ${esc(s.id)}</h3><div class="g4">${f('xC', 'Class', s.cls)}${f('xS', 'Subject', s.subject)}${f('xP', 'Paper', s.paper)}${f('xH', 'Chapter', s.chapter)}${f('xN', 'Set name', s.name)}
     ${f('xM', 'Exam time (min)', s.mins, 'number')}${f('xU', 'Upload window (min)', s.um, 'number')}${f('xPM', 'Part marks', JSON.parse(s.pm || '[]').join(','))}</div>
     <button class="btn ok sm" data-a="wmSaveSet">Save set details</button></div>`;
   $('#wmList').innerHTML = WA.qs.map((q, i) => `<div class="q" id="wq${i}"><div class="qh"><span><span class="qid">${esc(q.id)}</span><b>প্রশ্ন ${i + 1}</b></span>
@@ -71,12 +71,16 @@ Object.assign(act, {
     if (!val('wN').trim()) throw 'Enter a Set name first';
     const pm = val('wPM').split(',').map(x => x.trim()).filter(Boolean).map(Number);
     const j = await api('wSave', { cls: val('wC').trim(), subject: val('wS').trim(), paper: val('wP'), chapter: val('wH').trim(), name: val('wN').trim(), mins: val('wM'), uploadMins: val('wU'),
-      partMarks: pm, append: $('#wA').checked, qs: wParse(val('wJ')) });
+      partMarks: pm, append: $('#wA').checked, hidden: $('#wHid').checked, qs: wParse(val('wJ')) });
     toast(`${j.replaced ? 'Replaced' : 'Saved'} written set ${j.setId}: ${j.added} creative question(s). Opening Exams…`); go('exams', { cls: j.cls, subject: j.subject });
   },
   wmLoad: async () => {
     WA.setId = val('wmSet'); if (!WA.setId) return toast('Choose a written set first');
     const j = await api('wListQs', { id: WA.setId }); WA.qs = j.qs; WA.pm = j.pm; drawWm();
+  },
+  wmToggle: async () => {
+    const s = WA.sets.find(x => x.id === WA.setId); if (!s) return;
+    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); go('admin');
   },
   wmSaveSet: async () => {
     const pm = val('xPM').split(',').map(x => x.trim()).filter(Boolean).map(Number);
