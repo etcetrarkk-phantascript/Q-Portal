@@ -19,7 +19,7 @@ function typeset() {   // KaTeX: renders $...$ in the page (safe to call any tim
 }
 let _mt; const _mo = new MutationObserver((ms) => {
   if (ms.every(m => m.target.id === 'tm')) return;           // ignore the ticking timer
-  clearTimeout(_mt); _mt = setTimeout(() => { _mo.disconnect(); typeset(); _mo.observe($('#app'), { childList: true, subtree: true }); }, 60);
+  clearTimeout(_mt); _mt = setTimeout(() => { _mo.disconnect(); typeset(); if (typeof loadImgs === 'function') loadImgs(); _mo.observe($('#app'), { childList: true, subtree: true }); }, 60);
 });
 document.addEventListener('DOMContentLoaded', () => _mo.observe($('#app'), { childList: true, subtree: true }));
 window.addEventListener('load', () => { if (!window.renderMathInElement) toast('Math library (KaTeX) could not load. Check your internet / ad-blocker.'); typeset(); });
