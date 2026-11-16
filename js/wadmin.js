@@ -66,7 +66,25 @@ function wRecalc() {
 document.addEventListener('input', (e) => { if (e.target.dataset && e.target.dataset.wm && WG) wRecalc(); });
 document.addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.sel === 'wpat') { const p = CONFIG.PATTERNS[e.target.value]; if (p) $('#wPM').value = p.join(','); } });
 
+let WIMG = '';
+async function upImg(file, target) {   // shrink → upload to Drive → insert [[img:ID]] at the cursor
+  const ta = $('#' + target); if (!ta) return;
+  let bmp; try { bmp = await createImageBitmap(file); } catch (e) { throw 'Could not read this image'; }
+  const k = Math.min(1, 1100 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
+  const out = c.toDataURL('image/jpeg', 0.85); toast('Uploading image…');
+  const j = await api('imgUpload', { name: file.name || 'figure', data: out.slice(out.indexOf(',') + 1), mime: 'image/jpeg' });
+  const p = ta.selectionStart == null ? ta.value.length : ta.selectionStart, tok = '[[img:' + j.id + ']]';
+  ta.value = ta.value.slice(0, p) + tok + ta.value.slice(p); toast('Image added — press Save to keep it.');
+}
+document.addEventListener('change', (e) => { if (e.target.id === 'wimgf' && e.target.files[0]) { upImg(e.target.files[0], WIMG).catch(x => toast(typeof x === 'string' ? x : x.message)); e.target.value = ''; } });
+document.addEventListener('paste', (e) => {
+  const t = e.target; if (!t || (t.id !== 'eqs' && t.id !== 'eqp')) return;
+  const f = [...((e.clipboardData && e.clipboardData.files) || [])].find(x => x.type.startsWith('image/')); if (!f) return;
+  e.preventDefault(); upImg(f, t.id).catch(x => toast(typeof x === 'string' ? x : x.message));
+});
 Object.assign(act, {
+  wimg: (d) => { WIMG = d.t; $('#wimgf').click(); },
   wsave: async () => {
     if (!val('wN').trim()) throw 'Enter a Set name first';
     const pm = val('wPM').split(',').map(x => x.trim()).filter(Boolean).map(Number);
@@ -95,7 +113,9 @@ Object.assign(act, {
   wqEdit: (d) => {
     const i = +d.i, q = WA.qs[i];
     $('#wq' + i).innerHTML = `<div class="mu" style="margin-bottom:6px"><span class="qid">${esc(q.id)}</span> editing</div><label>Context (uddipok)</label><textarea id="eqs" style="min-height:100px">${esc(q.stem)}</textarea>
+    <div style="margin-bottom:10px"><button class="btn s sm" data-a="wimg" data-t="eqs">＋ Insert image</button> <span class="mu">or click in the box and paste a screenshot (Ctrl+V). Appears as [[img:…]].</span></div><input type="file" id="wimgf" accept="image/*" hidden>
     <label>Parts — one per line (ক, খ, গ, ঘ order; ${WA.pm.length} lines)</label><textarea id="eqp" style="min-height:110px">${esc(q.parts.join('\n'))}</textarea>
+    <div style="margin-bottom:10px"><button class="btn s sm" data-a="wimg" data-t="eqp">＋ Insert image in a part</button></div>
     <button class="btn ok sm" data-a="wqSave" data-i="${i}">Save</button> <button class="btn no sm" data-a="wqCancel">Cancel</button>`;
   },
   wqCancel: () => drawWm(),
