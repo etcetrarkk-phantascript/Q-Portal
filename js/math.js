@@ -80,10 +80,38 @@ function mathify(t, isOpt) {
   if (t.includes('$')) return t;
   let pre = ''; const m = t.match(/^\s*\d+\.\s+/); if (m) { pre = m[0]; t = t.slice(pre.length); }
   const keep = []; t = t.replace(/\((?:[A-Za-z]{3,})(?:[ \-][A-Za-z]{3,})*\)/g, m => { keep.push(m); return String.fromCharCode(0xE000 + keep.length - 1); });   // keep (English phrases) as text
-  const back = (x) => x.replace(/[\uE000-\uF8FF]/g, c => keep[c.charCodeAt(0) - 0xE000]);
+  const back = (x) => x.replace(/[\uE000-\uE0FF]/g, c => keep[c.charCodeAt(0) - 0xE000]);
   if (!BN.test(t)) { if (!isOpt) return pre + back(t); const c = t.trim(); return isText(c) ? pre + back(t) : '$' + toTex(c) + '$'; }
   return pre + back(t.replace(RUN, wrapRun));
 }
-const fq = (s) => esc(mathify(s, false));                 // question text → safe HTML with $…$
+/* Figures: inline <svg>…</svg> (Gemini can draw these) and [[img:ID]] / [[img:https://…]] (pictures attached in Admin) */
+function cleanSvg(raw) {
+  try {
+    if (!/xmlns=/.test(raw)) raw = raw.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+    const d = new DOMParser().parseFromString(raw, 'image/svg+xml'), r = d.documentElement;
+    if (!r || r.nodeName.toLowerCase() !== 'svg' || d.querySelector('parsererror')) return '';
+    r.querySelectorAll('script,foreignObject,iframe,style,image,use,a').forEach(n => n.remove());
+    [r, ...r.querySelectorAll('*')].forEach(n => [...n.attributes].forEach(a => { const k = a.name.toLowerCase(); if (k.startsWith('on') || ((k === 'href' || k === 'xlink:href') && !String(a.value).startsWith('#'))) n.removeAttribute(a.name); }));
+    if (!r.getAttribute('viewBox') && parseFloat(r.getAttribute('width')) > 0 && parseFloat(r.getAttribute('height')) > 0) r.setAttribute('viewBox', `0 0 ${parseFloat(r.getAttribute('width'))} ${parseFloat(r.getAttribute('height'))}`);
+    r.setAttribute('role', 'img');
+    return new XMLSerializer().serializeToString(r);
+  } catch (e) { return ''; }
+}
+const imgTag = (id) => /^https:\/\//i.test(id) ? `<img class="fig" src="${esc(id)}" alt="figure" loading="lazy">` : `<img class="fig" data-img="${esc(id)}" alt="loading figure…">`;
+const fq = (s) => {   // question text → safe HTML with $…$ formulas, SVG figures and images
+  const keep = [];
+  const t = String(s == null ? '' : s)
+    .replace(/<svg[\s\S]*?<\/svg>/gi, m => { keep.push('<div class="fig">' + cleanSvg(m) + '</div>'); return String.fromCharCode(0xE100 + keep.length - 1); })
+    .replace(/\[\[img:([^\]\s]+)\]\]/g, (m, id) => { keep.push(imgTag(id)); return String.fromCharCode(0xE100 + keep.length - 1); });
+  return esc(mathify(t, false)).replace(/[\uE100-\uE1FF]/g, c => keep[c.charCodeAt(0) - 0xE100]);
+};
+const IMGC = {};
+function loadImgs() {   // fetches Drive-stored pictures (signed-in users only) and shows them
+  document.querySelectorAll('img[data-img]:not([data-ok])').forEach(async el => {
+    el.dataset.ok = '1'; const id = el.dataset.img;
+    try { if (!IMGC[id]) IMGC[id] = api('imgGet', { id }).then(j => `data:${j.mime};base64,${j.data}`); el.src = await IMGC[id]; }
+    catch (e) { delete IMGC[id]; if (e !== '__stale') el.alt = '[figure unavailable]'; }
+  });
+}
 const fopt = (o) => esc(mathify(clean(o), true));          // option text → safe HTML with $…$
 if (typeof module !== 'undefined') module.exports = { mathify, toTex };
