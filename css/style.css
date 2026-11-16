@@ -85,3 +85,5 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 8px;
 .asec{background:#ece8fb;border-radius:18px;padding:12px 12px 2px;margin-bottom:20px}
 .asec .card{margin-bottom:12px}
 h2.sec{margin:2px 4px 12px;color:var(--p);font-size:18px;letter-spacing:.02em}
+
+.fig{display:block;max-width:100%;margin:8px auto}.fig svg{max-width:100%;height:auto;display:block;margin:0 auto}img.fig{max-height:420px;border-radius:8px;border:1px solid var(--bd)}
