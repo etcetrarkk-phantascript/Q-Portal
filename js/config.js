@@ -18,6 +18,8 @@
    js/share.js       shareable question links (#q=S1-Q003)
    js/written.js     written exams (student): paper, compressed answer-sheet upload, result
    js/wadmin.js      written exams (admin): publish, manage, submissions, marking
+   js/qedit.js       ✎ pen-icon pop-up editor for questions (admin)
+   js/queue.js       admin 🚩 review queue / flag chart with one-click Evaluate
    js/admin.js       publish / edit / delete questions · approvals
    js/app.js         boot (starts the app)
 
@@ -32,7 +34,7 @@
    "ans" = index of the right option (0 = first). IDs (S1-Q001 …) are assigned automatically and never change.
 */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbyM0W_IW83xR0m9SoR4YJaUHl09QteMr1iUMghPfYXzZwS6lGsYX0Kx2teYgTTCxdRI0g/exec",                                   // ← https://script.google.com/macros/s/XXXX/exec
+  API_URL: "https://script.google.com/macros/s/AKfycbyM0W_IW83xR0m9SoR4YJaUHl09QteMr1iUMghPfYXzZwS6lGsYX0Kx2teYgTTCxdRI0g/exec",       // ← https://script.google.com/macros/s/XXXX/exec
   APP_NAME: "Q-Portal",
   CLASSES: ["HSC", "SSC", "Admission"],          // suggestions in Admin & registration
   PAPERS: ["1st Paper", "2nd Paper"],
