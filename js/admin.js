@@ -11,10 +11,11 @@ function parseQs(t) {
 }
 VIEWS.admin = async () => {
   $('#app').innerHTML = '<p class="mu">Loading…</p>';
-  const [p, c, us] = await Promise.all([api('pending'), api('catalog'), api('users')]);
+  const [p, c, us, ws] = await Promise.all([api('pending'), api('catalog'), api('users'), api('wSubs', {}).catch(e => { if (e === '__stale') throw e; return { rows: [] }; })]);
   AD.sets = c.sets;
   const dl = (id, arr) => `<datalist id="${id}">${[...new Set(arr)].map(v => `<option value="${esc(v)}">`).join('')}</datalist>`;
   $('#app').innerHTML = `
+  <div id="wQueue" class="asec"></div>
   <div class="asec"><h2 class="sec">MCQ questions</h2>
   <div class="card"><h2>1a · Publish MCQ questions</h2><p class="mu">Paste the Gemini array. <b>Set name</b> tells sets apart: same chapter + same name = replaced (or tick Append to add); a new name = a separate set. Leave it empty to auto-name "Set 2", "Set 3"… IDs are assigned automatically.</p>
     <div class="g4" style="margin-top:10px"><div><label>Class</label><input id="aC" list="dC" value="${esc(CONFIG.CLASSES[0])}"></div><div><label>Subject</label><input id="aS" list="dS" placeholder="Physics"></div>
@@ -36,6 +37,7 @@ VIEWS.admin = async () => {
     <td style="text-align:right"><button class="btn ok sm" data-a="dec" data-k="sol" data-id="${x.id}" data-y="1">Approve</button> <button class="btn no sm" data-a="dec" data-k="sol" data-id="${x.id}">Reject</button></td></tr>`).join('') || '<tr><td class="mu">Nothing pending.</td></tr>'}</table></div></div>
   <div class="card"><h3>Registration approvals (${p.users.length})</h3><div class="tw"><table>${p.users.map(x => `<tr><td><b>${esc(x.name)}</b><div class="mu">${esc(x.email)}</div></td><td class="mu">${esc(x.cls)} · ${esc(x.roll)}</td>
     <td style="text-align:right"><button class="btn ok sm" data-a="dec" data-k="user" data-id="${x.email}" data-y="1">Approve</button> <button class="btn no sm" data-a="dec" data-k="user" data-id="${x.email}">Reject</button></td></tr>`).join('') || '<tr><td class="mu">Nothing pending.</td></tr>'}</table></div></div>`;
+  if (typeof drawQueue === 'function') drawQueue(ws.rows || [], p);
   if (typeof drawWAdmin === 'function') drawWAdmin(c.sets);
   if (AD.setId) act.mLoad();
 };
@@ -59,7 +61,7 @@ Object.assign(act, {
     const qs = parseQs(val('aJ')), cls = val('aC').trim(), subject = val('aS').trim(), paper = val('aP'), chapter = val('aH').trim();
     const j = await api('saveSet', { cls, subject, paper, chapter, name: val('aN').trim(), mins: val('aM'), pos: val('aPo'), neg: val('aNe'), append: $('#aA').checked, hidden: $('#aHid').checked, qs });
     toast(`${j.replaced ? 'Replaced' : 'Saved'} “${j.name}” (${j.setId}): ${j.added} questions. Opening Exams…`);
-    go('exams', { cls: j.cls, subject: j.subject });
+    go('exams', { cls: j.cls, subject: j.subject, paper: j.paper, chapter: j.chapter });
   },
   mLoad: async () => {
     AD.setId = val('mSet'); if (!AD.setId) return toast('Choose a chapter first');
@@ -85,15 +87,15 @@ Object.assign(act, {
   mDelSet: async () => {
     if (!AD.setId && !(AD.setId = val('mSet'))) return toast('Choose a chapter first');
     if (!confirm('Delete the whole chapter and all its questions? Past results stay in History but their sheets will no longer open.')) return;
-    await api('delSet', { id: AD.setId }); AD.setId = ''; AD.qs = []; toast('Chapter deleted'); go('admin');
+    await api('delSet', { id: AD.setId }); AD.setId = ''; AD.qs = []; toast('Chapter deleted'); adminRefresh();
   },
   mToggle: async () => {
     const s = AD.sets.find(x => x.id === AD.setId); if (!s) return;
-    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); go('admin');
+    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); adminRefresh();
   },
   mSaveSet: async () => {
     await api('editSet', { id: AD.setId, cls: val('sC'), subject: val('sS'), paper: val('sP'), chapter: val('sH'), name: val('sN'), mins: val('sM'), pos: val('sPo'), neg: val('sNe') });
-    toast('Set details saved'); go('admin');
+    toast('Set details saved'); adminRefresh();
   },
   uHist: d => go('hist', { email: d.e, name: d.n }),
   uPerf: d => go('perf', { email: d.e, name: d.n }),
