@@ -11,9 +11,9 @@ VIEWS.home = async () => {
     .map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('');
 };
 
-let EX = { cls: null, subject: null };
+let EX = { cls: null, subject: null, paper: null, chapter: null };
 VIEWS.exams = async (a) => {
-  if (a) EX = { cls: a.cls || null, subject: a.subject || null };
+  if (a) EX = { cls: a.cls || null, subject: a.subject || null, paper: a.paper || null, chapter: a.chapter || null };
   $('#app').innerHTML = '<p class="mu">Loading…</p>';
   S.sets = (await api('catalog')).sets;
   drawExams();
@@ -37,16 +37,26 @@ function drawExams() {
     const wTotal = s => JSON.parse(s.pm || '[]').reduce((a, b) => a + b, 0) * s.n;
     const row = s => s.type === 'written' ? `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} creative question(s) · ${s.mins} min · ${wTotal(s)} marks · upload window ${s.um || 10} min</span><br>
         <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span>${s.hidden ? ' <span class="pill r">🔒 Hidden from students</span>' : ''}</div>
-        <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}">🔗 Share</button> ${s.n ? `<button class="btn" data-a="wstart" data-id="${esc(s.id)}">✍ Start written</button>` : '<span class="pill r">No questions</span>'}</span></div>`
+        <span style="white-space:nowrap">${S.u.role === 'admin' ? `<button class="btn s sm" data-a="qedit" data-id="${esc(s.id)}" title="Edit questions">✎</button> ` : ''}<button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}">🔗 Share</button> ${s.n ? `<button class="btn" data-a="wstart" data-id="${esc(s.id)}">✍ Start written</button>` : '<span class="pill r">No questions</span>'}</span></div>`
       : `<div class="row" style="padding:8px 0 0 10px"><div><b style="color:var(--p);font-size:16px">${esc(s.name)}</b> <span class="mu">${s.n} questions · ${s.mins} min · +${s.pos} / −${s.neg}</span><br>
         <span class="pill w">${s.tries ? 'Taken ' + s.tries + '×' : 'New'}</span>${s.hidden ? ' <span class="pill r">🔒 Hidden from students</span>' : ''} ${s.best != null ? `<span class="pill g">Best ${s.best}%</span>` : ''}</div>
-        <span style="white-space:nowrap"><button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}" title="Copy link to this exam">🔗 Share</button> ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</span></div>`;
+        <span style="white-space:nowrap">${S.u.role === 'admin' ? `<button class="btn s sm" data-a="qedit" data-id="${esc(s.id)}" title="Edit questions">✎</button> ` : ''}<button class="btn s sm" data-a="copyset" data-id="${esc(s.id)}" title="Copy link to this exam">🔗 Share</button> ${s.n ? `<button class="btn" data-a="start" data-id="${esc(s.id)}">▶ Start</button>` : '<span class="pill r">No questions</span>'}</span></div>`;
     const sec = (t, a) => a.length ? `<div class="mu" style="margin:10px 0 0 10px;font-weight:700">${t}</div>${a.map(row).join('')}` : '';
-    body = papers.map(p => { const inP = x.filter(s => s.paper === p);
-      return `<div class="card"><h3>${esc(p)}</h3>${uniq(inP.map(s => s.chapter)).map(c => { const rs = inP.filter(s => s.chapter === c);
-        return `<div style="padding:10px 0;border-top:1px solid var(--bd)"><b>${esc(c)}</b>${sec('MCQ', rs.filter(s => s.type !== 'written'))}${sec('CQ (written)', rs.filter(s => s.type === 'written'))}</div>`; }).join('')}</div>`; }).join('');
+    const chNum = c => { const m = String(c).match(/\d+/); return m ? +m[0] : 1e9; };
+    if (!papers.includes(EX.paper)) EX.paper = papers[0];
+    const inP = x.filter(s => s.paper === EX.paper);
+    const chs = uniq(inP.map(s => s.chapter)).sort((a, b) => chNum(a) - chNum(b) || a.localeCompare(b));
+    if (!chs.includes(EX.chapter)) EX.chapter = chs[0];
+    const rs = inP.filter(s => s.chapter === EX.chapter);
+    const blk = (t, a) => sec(t, a) || `<div class="mu" style="margin:10px 0 0 10px"><b>${t}</b> · nothing published yet</div>`;
+    body = `<div class="chips">${papers.map(p => `<a class="chip big ${p === EX.paper ? 'on' : ''}" data-a="exPaper" data-p="${esc(p)}">${esc(p)}</a>`).join('')}</div>
+      <div class="chips">${chs.map(c => `<a class="chip ${c === EX.chapter ? 'on' : ''}" data-a="exChap" data-ch="${esc(c)}">${esc(c)}</a>`).join('')}</div>
+      <div class="card"><h3>${esc(EX.chapter || '')}</h3>${blk('MCQ', rs.filter(s => s.type !== 'written'))}${blk('CQ (written)', rs.filter(s => s.type === 'written'))}</div>`;
   }
   $('#app').innerHTML = crumb + body;
+  document.querySelectorAll('.chip.on').forEach(el => el.scrollIntoView({ inline: 'center', block: 'nearest' }));
 }
 act.exOpen = d => { EX = { cls: d.c || null, subject: d.s || null }; drawExams(); };
+act.exPaper = d => { EX.paper = d.p; drawExams(); };
+act.exChap = d => { EX.chapter = d.ch; drawExams(); };
 act.exRefresh = () => VIEWS.exams();
