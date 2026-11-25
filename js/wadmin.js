@@ -46,7 +46,7 @@ VIEWS.wgrade = async (a) => {
   $('#app').innerHTML = `<div class="crumb"><a data-a="go" data-v="admin">← Admin</a></div>
   <div class="card"><div class="row" style="align-items:flex-start"><div><h2>Exam Paper · ${esc(x.name)}</h2><div style="font-weight:600">${esc(WG.set.cls)} · ${esc(WG.set.subject)} (${esc(WG.set.paper)}) · ${esc(WG.set.chapter)} · ${esc(WG.set.name)}</div>
     <div class="mu">Roll ${esc(x.roll)} · ${esc(x.email)} · Attempt #${x.no} · ${fmtDT(x.ts)}</div></div><div style="text-align:right"><span class="pill ${x.status === 'published' ? 'g' : 'w'}">${st}</span><div class="score" id="wTot">0 / ${x.total}</div></div></div></div>
-  ${WG.qs.map(q => `<div class="card"><div class="row"><b>প্রশ্ন ${q.n}</b><span class="pill" id="qt${q.n}"></span></div><div class="stem">${fq(q.stem)}</div>
+  ${WG.qs.map(q => `<div class="card"><div class="row"><b>প্রশ্ন ${q.n} <a data-a="qedit" data-id="${esc(WG.set.id)}" data-q="${esc(q.id)}" title="Edit this question" style="cursor:pointer">✎</a></b><span class="pill" id="qt${q.n}"></span></div><div class="stem">${fq(q.stem)}</div>
     ${q.parts.map((p, i) => { const mk = (WG.marks[q.n] || [])[i] || {};
       return `<div class="wp" style="flex-wrap:wrap"><span class="lb">${WL[i]}</span><span class="tx" style="min-width:60%">${fq(p.t)}</span>
       <span style="white-space:nowrap"><input type="number" data-wm="${q.n}" data-i="${i}" id="m${q.n}_${i}" min="0" max="${p.m}" step="0.25" value="${mk.m ?? ''}" placeholder="0"> / ${p.m}</span>
@@ -90,7 +90,7 @@ Object.assign(act, {
     const pm = val('wPM').split(',').map(x => x.trim()).filter(Boolean).map(Number);
     const j = await api('wSave', { cls: val('wC').trim(), subject: val('wS').trim(), paper: val('wP'), chapter: val('wH').trim(), name: val('wN').trim(), mins: val('wM'), uploadMins: val('wU'),
       partMarks: pm, append: $('#wA').checked, hidden: $('#wHid').checked, qs: wParse(val('wJ')) });
-    toast(`${j.replaced ? 'Replaced' : 'Saved'} written set ${j.setId}: ${j.added} creative question(s). Opening Exams…`); go('exams', { cls: j.cls, subject: j.subject });
+    toast(`${j.replaced ? 'Replaced' : 'Saved'} written set ${j.setId}: ${j.added} creative question(s). Opening Exams…`); go('exams', { cls: j.cls, subject: j.subject, paper: j.paper, chapter: j.chapter });
   },
   wmLoad: async () => {
     WA.setId = val('wmSet'); if (!WA.setId) return toast('Choose a written set first');
@@ -98,17 +98,17 @@ Object.assign(act, {
   },
   wmToggle: async () => {
     const s = WA.sets.find(x => x.id === WA.setId); if (!s) return;
-    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); go('admin');
+    await api('setHidden', { id: s.id, hidden: !s.hidden }); toast(s.hidden ? 'Now visible to students' : 'Now hidden from students'); adminRefresh();
   },
   wmSaveSet: async () => {
     const pm = val('xPM').split(',').map(x => x.trim()).filter(Boolean).map(Number);
     await api('editSet', { id: WA.setId, cls: val('xC'), subject: val('xS'), paper: val('xP'), chapter: val('xH'), name: val('xN'), mins: val('xM'), uploadMins: val('xU'), partMarks: JSON.stringify(pm) });
-    toast('Set details saved'); go('admin');
+    toast('Set details saved'); adminRefresh();
   },
   wmDelSet: async () => {
     if (!WA.setId && !(WA.setId = val('wmSet'))) return toast('Choose a written set first');
     if (!confirm('Delete this written set and its questions? Submitted answer sheets stay in Drive.')) return;
-    await api('delSet', { id: WA.setId }); WA.setId = ''; toast('Set deleted'); go('admin');
+    await api('delSet', { id: WA.setId }); WA.setId = ''; toast('Set deleted'); adminRefresh();
   },
   wqEdit: (d) => {
     const i = +d.i, q = WA.qs[i];
