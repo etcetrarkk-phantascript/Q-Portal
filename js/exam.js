@@ -38,7 +38,7 @@ VIEWS.report = async ({ id, type = 1 }) => {
     ${k ? '<span><span class="pill" style="background:var(--y);color:#713f12">গ</span> Correct option</span>' : ''}</div><hr style="border:0;border-top:1px solid var(--bd);margin:14px 0">
     ${j.items.map(it => {
       const st = it.pick == null ? '' : it.right ? 'ok' : 'bad';
-      return `<div class="q ${st}"><div class="qh"><span><span class="qid">${esc(it.id)}</span>${fq(it.q)}</span><span class="sc ${st}">${it.right ? '+' + m.pos : it.pick == null ? '0' : '−' + m.neg}</span></div><div class="os two">
+      return `<div class="q ${st}"><div class="qh"><span><span class="qid">${esc(it.id)}</span>${S.u.role === 'admin' ? `<a class="noprint" data-a="qedit" data-id="${esc(m.setId)}" data-q="${esc(it.id)}" title="Edit this question" style="cursor:pointer;margin-right:6px">✎</a>` : ''}${fq(it.q)}</span><span class="sc ${st}">${it.right ? '+' + m.pos : it.pick == null ? '0' : '−' + m.neg}</span></div><div class="os two">
       ${it.options.map((o, x) => { const c = it.pick === x ? (it.right ? 'g' : 'r') : (k && it.ans === x ? 'y' : '');
         return `<div class="o ${c}"><i class="b">${L[x]}</i><span>${fopt(o)}</span></div>`; }).join('')}</div></div>`;
     }).join('')}</div>`;
