@@ -5,7 +5,7 @@ VIEWS.q = async (id) => {
   S.pendV = S.pendId = null;
   const j = await api('getQ', { id }), q = j.q, s = j.set, adm = S.u.role === 'admin';
   $('#app').innerHTML = `<div class="card"><div class="row"><span><span class="qid">${esc(q.id)}</span> <span class="mu">${esc(s.cls)} › ${esc(s.subject)} › ${esc(s.paper)} › ${esc(s.chapter)} · ${esc(s.name)}</span></span>
-    <button class="btn s sm" data-a="copyq" data-id="${esc(q.id)}">🔗 Copy link</button></div>
+    <span>${adm ? `<button class="btn s sm" data-a="qedit" data-id="${esc(s.id)}" data-q="${esc(q.id)}">✎ Edit</button> ` : ''}<button class="btn s sm" data-a="copyq" data-id="${esc(q.id)}">🔗 Copy link</button></span></div>
     <div class="qh" style="margin-top:12px"><span>${fq(q.q)}</span></div>
     <div class="os">${q.options.map((o, k) => `<div class="o ${adm && q.ans === k ? 'y' : ''}"><i class="b">${L[k]}</i><span>${fopt(o)}</span></div>`).join('')}</div>
     <p class="mu">${adm ? 'Admin view: the correct option is highlighted.' : 'Answers are not shown here. Take the exam to test yourself.'}</p>
